@@ -1,7 +1,10 @@
-FROM node:22-slim AS builder
+FROM node:22-bullseye-slim AS builder
 
-# Install OpenSSL and Prisma dependencies
-RUN apt-get update && apt-get install -y openssl
+# Install required system dependencies
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -9,29 +12,32 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci
+# Use npm install instead of npm ci
+RUN npm install --legacy-peer-deps
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy source code
+# Copy application source
 COPY src ./src
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 
-# Build TypeScript
+# Build the application
 RUN npm run build
 
-# Production stage - Use Debian-based for better compatibility
-FROM node:22-slim
+# Production stage
+FROM node:22-bullseye-slim
 
-# Install OpenSSL for production
-RUN apt-get update && apt-get install -y openssl
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy built artifacts
+# Copy from builder
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
