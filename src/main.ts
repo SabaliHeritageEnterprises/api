@@ -1,46 +1,24 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import { AppModule } from './app.module';
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
-  const config = app.get(ConfigService);
-  const logger = new Logger('Bootstrap');
-
-  // ── Security middleware ──────────────────────────────────────
-  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-  app.use(cookieParser());
-
-  // ── CORS (credentials enabled for httpOnly refresh cookie) ───
-  app.enableCors({
-    origin: config.get<string>('corsOrigin')?.split(',') ?? true,
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  });
-
-  // ── Global validation: whitelist + transform DTOs ────────────
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
-
-  const prefix = config.get<string>('globalPrefix') ?? 'api/v1';
-  app.setGlobalPrefix(prefix);
-
-  const port = config.get<number>('port') ?? 4000;
-  
-  // ✅ CRITICAL FIX: Bind to 0.0.0.0 to accept external traffic
-  await app.listen(port, '0.0.0.0');
-  
-  logger.log(`🚀 ApexTrade API ready at http://0.0.0.0:${port}/${prefix}`);
-  logger.log(`📡 Health check: http://0.0.0.0:${port}/${prefix}/health`);
-}
-
-bootstrap();
+// src/main.ts
+app.enableCors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://apps-frontend-tau.vercel.app',
+      'https://apex1.up.railway.app',
+      'http://localhost:3000',
+      'http://localhost:4000'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+});
