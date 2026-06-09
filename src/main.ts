@@ -13,23 +13,31 @@ async function bootstrap() {
   // Security middleware
   app.use(helmet({ 
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-    contentSecurityPolicy: false, // Allow WebSocket connections
+    contentSecurityPolicy: false,
   }));
   app.use(cookieParser());
 
-  // CORS for both HTTP and WebSocket
+  // ✅ FIXED CORS CONFIGURATION
   app.enableCors({
     origin: [
       'https://apps-frontend-tau.vercel.app',
       'https://apex1.up.railway.app',
       'http://localhost:3000',
-      'http://localhost:4000'
+      'http://localhost:4000',
+      'https://apps-frontend-tau.vercel.app:3000'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Cookie',
+      'X-Requested-With',
+      'Accept'
+    ],
+    exposedHeaders: ['Set-Cookie'],
   });
 
-  // Global validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -44,11 +52,10 @@ async function bootstrap() {
 
   const port = config.get<number>('port') ?? 4000;
   
-  // Bind to all interfaces for Railway
   await app.listen(port, '0.0.0.0');
   
   logger.log(`🚀 API ready at http://0.0.0.0:${port}/${prefix}`);
-  logger.log(`🔌 WebSocket ready at ws://0.0.0.0:${port}/socket.io`);
+  logger.log(`✅ CORS enabled for: https://apps-frontend-tau.vercel.app`);
 }
 
 bootstrap();
