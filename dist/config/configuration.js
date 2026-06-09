@@ -2,9 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = () => ({
     env: process.env.NODE_ENV ?? 'development',
-    port: parseInt(process.env.API_PORT ?? '4000', 10),
+    
+    // ✅ FIXED: Check PORT (Railway) first, then API_PORT, then default
+    port: parseInt(process.env.PORT ?? process.env.API_PORT ?? '4000', 10),
+    
     globalPrefix: process.env.API_GLOBAL_PREFIX ?? 'api/v1',
     corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    
     database: {
         url: process.env.DATABASE_URL,
     },

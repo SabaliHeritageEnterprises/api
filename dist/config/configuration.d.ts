@@ -31,4 +31,5 @@ declare const _default: () => {
         from: string;
     };
 };
+
 export default _default;
