@@ -35,8 +35,12 @@ async function bootstrap() {
   app.setGlobalPrefix(prefix);
 
   const port = config.get<number>('port') ?? 4000;
-  await app.listen(port);
-  logger.log(`🚀 ApexTrade API ready at http://localhost:${port}/${prefix}`);
+  
+  // ✅ CRITICAL FIX: Bind to 0.0.0.0 to accept external traffic
+  await app.listen(port, '0.0.0.0');
+  
+  logger.log(`🚀 ApexTrade API ready at http://0.0.0.0:${port}/${prefix}`);
+  logger.log(`📡 Health check: http://0.0.0.0:${port}/${prefix}/health`);
 }
 
 bootstrap();
